@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCIENCE EXPLORER - Misi Saintis Cilik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Fredoka+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0ea5e9; /* Biru Sains */
+            --secondary: #22c55e; /* Hijau Alam */
+            --accent: #f59e0b; /* Kuning Aksen */
+            --bg-color: #f0fdfa; /* Pastel Teal */
+        }
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#bae6fd 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: #334155;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        h1, h2, h3, .brand-font {
+            font-family: 'Fredoka One', cursive;
+            letter-spacing: 1px;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.02);
+            border: 4px solid #fff;
+        }
+        .btn-sci {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-sci:active {
+            transform: scale(0.95);
+        }
+        .btn-sci::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 100%);
+            pointer-events: none;
+        }
+        
+        /* -------------------------------------
+           QA FIX: OPTION BUTTONS STYLING
+           ------------------------------------- */
+        .option-btn {
+            border: 3px solid #e2e8f0;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            background-color: #ffffff;
+        }
+        .option-btn:not(:disabled):hover {
+            border-color: var(--primary);
+            background-color: #f0f9ff;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 0 var(--primary);
+        }
+        .option-btn:not(:disabled):active {
+            transform: translateY(0);
+            box-shadow: 0 0 0 var(--primary);
+        }
+        .option-btn:disabled {
+            cursor: default; /* Remove pointer on answered buttons */
+        }
+        
+        /* State apabila pelajar klik jawapan yang TEPAT */
+        .option-btn.correct {
+            border-color: var(--secondary) !important;
+            background-color: #dcfce7 !important;
+            color: #166534 !important;
+            box-shadow: 0 4px 0 var(--secondary) !important;
+            transform: translateY(-2px);
+        }
+        
+        /* State apabila pelajar klik jawapan yang SALAH */
+        .option-btn.wrong {
+            border-color: #ef4444 !important;
+            background-color: #fee2e2 !important;
+            color: #991b1b !important;
+            box-shadow: 0 4px 0 #ef4444 !important;
+            transform: translateY(-2px);
+        }
+        
+        /* Animasi nadi (pulse) untuk menunjukkan jawapan sebenar jika pelajar salah */
+        .option-btn.show-correct {
+            border-color: var(--secondary) !important;
+            background-color: #dcfce7 !important;
+            color: #166534 !important;
+            animation: pulse-correct 1.5s infinite;
+        }
+        @keyframes pulse-correct {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        /* ------------------------------------- */
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+        .screen.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .progress-bar {
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <nav class="max-w-6xl mx-auto flex justify-between items-center mb-8 glass-panel px-6 py-4">
+        <div class="flex items-center gap-3 text-sky-600 cursor-pointer" onclick="showScreen('home-screen')">
+            <i class="fa-solid fa-microscope text-3xl"></i>
+            <span class="brand-font text-2xl hidden sm:block">SCIENCE EXPLORER</span>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="showScreen('home-screen')" class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-xl font-bold hover:bg-indigo-200 transition-colors">
+                <i class="fa-solid fa-home mr-2"></i>Utama
+            </button>
+        </div>
+    </nav>
+
+    <main id="home-screen" class="screen active max-w-6xl mx-auto">
+        <div class="text-center mb-10">
+            <h1 class="text-5xl text-sky-600 mb-4 drop-shadow-sm">Misi Saintis Cilik</h1>
+            <p class="text-xl text-slate-500 font-semibold">Pilih modul ujian berdasarkan Buku Teks Sains Tahun 2</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            <!-- Units will be generated here by JS -->
+            <div id="unit-container" class="contents"></div>
+        </div>
+
+        <h2 class="text-3xl text-center text-amber-500 mb-6 brand-font"><i class="fa-solid fa-star mr-2"></i>Zon Peperiksaan</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <button onclick="startExam(1)" class="btn-sci bg-gradient-to-br from-amber-400 to-orange-500 text-white p-6 rounded-2xl shadow-lg border-b-4 border-orange-700 flex items-center justify-between group">
+                <div class="text-left">
+                    <h3 class="text-2xl brand-font mb-1">Set Peperiksaan 1</h3>
+                    <p class="text-orange-100 font-semibold">50 Soalan • Semua Unit</p>
+                </div>
+                <i class="fa-solid fa-trophy text-5xl opacity-80 group-hover:scale-110 transition-transform"></i>
+            </button>
+            <button onclick="startExam(2)" class="btn-sci bg-gradient-to-br from-emerald-400 to-teal-500 text-white p-6 rounded-2xl shadow-lg border-b-4 border-teal-700 flex items-center justify-between group">
+                <div class="text-left">
+                    <h3 class="text-2xl brand-font mb-1">Set Peperiksaan 2</h3>
+                    <p class="text-teal-100 font-semibold">50 Soalan • Semua Unit</p>
+                </div>
+                <i class="fa-solid fa-medal text-5xl opacity-80 group-hover:scale-110 transition-transform"></i>
+            </button>
+        </div>
+    </main>
+
+    <main id="quiz-screen" class="screen max-w-4xl mx-auto">
+        <div class="glass-panel p-6 md:p-10 relative">
+            <div class="flex justify-between items-center mb-6">
+                <span id="quiz-title" class="font-bold text-sky-600 text-lg uppercase tracking-wider">Unit 1: Kemahiran Saintifik</span>
+                <span class="bg-sky-100 text-sky-700 px-4 py-1 rounded-full font-bold">Soalan <span id="current-q-num">1</span> / <span id="total-q-num">15</span></span>
+            </div>
+            
+            <div class="w-full bg-slate-100 rounded-full h-3 mb-8 overflow-hidden">
+                <div id="progress-bar" class="bg-green-500 h-3 rounded-full progress-bar" style="width: 0%"></div>
+            </div>
+
+            <div id="question-container" class="mb-8">
+                <div id="q-image-container" class="mb-6 hidden text-center">
+                    <!-- Scientific Illustrations Injected Here -->
+                </div>
+                <h2 id="q-text" class="text-2xl md:text-3xl font-bold text-slate-700 leading-snug">Apakah deria yang digunakan untuk merasa roti yang telah masak?</h2>
+            </div>
+
+            <div id="options-container" class="grid grid-cols-1 gap-4">
+                <!-- Options injected via JS -->
+            </div>
+
+            <div class="mt-8 flex justify-end">
+                <button id="next-btn" onclick="nextQuestion()" class="btn-sci bg-sky-500 hover:bg-sky-600 text-white font-bold text-xl px-8 py-3 rounded-xl shadow-md border-b-4 border-sky-700 hidden">
+                    Seterusnya <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+                <button id="finish-btn" onclick="finishQuiz()" class="btn-sci bg-green-500 hover:bg-green-600 text-white font-bold text-xl px-8 py-3 rounded-xl shadow-md border-b-4 border-green-700 hidden">
+                    Lihat Keputusan <i class="fa-solid fa-flag-checkered ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <main id="result-screen" class="screen max-w-4xl mx-auto text-center">
+        <div class="glass-panel p-10 py-16">
+            <i class="fa-solid fa-award text-6xl text-amber-400 mb-4 drop-shadow-md"></i>
+            <h1 class="text-4xl text-sky-700 mb-2 brand-font">Tahniah, Saintis Cilik!</h1>
+            <p id="result-message" class="text-xl text-slate-500 font-semibold mb-8">Anda telah melengkapkan misi ini.</p>
+            
+            <div class="flex justify-center items-center gap-8 mb-10">
+                <div class="bg-blue-50 p-6 rounded-3xl border-2 border-blue-100 w-48 shadow-inner">
+                    <div class="text-5xl brand-font text-blue-600 mb-1" id="score-text">12/15</div>
+                    <div class="text-sm font-bold text-blue-400 uppercase">Markah</div>
+                </div>
+                <div class="bg-green-50 p-6 rounded-3xl border-2 border-green-100 w-48 shadow-inner">
+                    <div class="text-5xl brand-font text-green-600 mb-1" id="percent-text">80%</div>
+                    <div class="text-sm font-bold text-green-400 uppercase">Ketepatan</div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button onclick="showScreen('home-screen')" class="btn-sci bg-slate-200 text-slate-700 hover:bg-slate-300 font-bold text-xl px-8 py-3 rounded-xl shadow-sm border-b-4 border-slate-400">
+                    <i class="fa-solid fa-home mr-2"></i> Menu Utama
+                </button>
+                <button onclick="showReview()" class="btn-sci bg-amber-400 text-amber-900 hover:bg-amber-500 font-bold text-xl px-8 py-3 rounded-xl shadow-md border-b-4 border-amber-600">
+                    <i class="fa-solid fa-list-check mr-2"></i> Semak Jawapan
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <main id="review-screen" class="screen max-w-5xl mx-auto">
+        <div class="glass-panel p-6 md:p-10 relative">
+            <div class="flex justify-between items-center mb-8 border-b-2 border-slate-100 pb-4">
+                <h2 class="text-2xl brand-font text-slate-700"><i class="fa-solid fa-book-open text-sky-500 mr-2"></i> Skema Jawapan & Semakan</h2>
+                <button onclick="showScreen('result-screen')" class="bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg font-bold text-slate-600 transition-colors">
+                    Kembali
+                </button>
+            </div>
+            <div id="review-container" class="space-y-6">
+                <!-- Review items injected here -->
+            </div>
+            <div class="mt-8 text-center">
+                 <button onclick="showScreen('home-screen')" class="btn-sci bg-sky-500 hover:bg-sky-600 text-white font-bold text-xl px-8 py-3 rounded-xl shadow-md border-b-4 border-sky-700">
+                    Selesai Menyemak
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const unitData = [
+            { id: 1, title: "Kemahiran Saintifik", icon: "fa-eye", color: "from-blue-400 to-sky-500", shadow: "border-sky-700" },
+            { id: 2, title: "Peraturan Bilik Sains", icon: "fa-clipboard-list", color: "from-red-400 to-rose-500", shadow: "border-rose-700" },
+            { id: 3, title: "Manusia", icon: "fa-child-reaching", color: "from-orange-400 to-amber-500", shadow: "border-amber-700" },
+            { id: 4, title: "Haiwan", icon: "fa-paw", color: "from-amber-500 to-yellow-500", shadow: "border-yellow-700" },
+            { id: 5, title: "Tumbuh-tumbuhan", icon: "fa-leaf", color: "from-green-400 to-emerald-500", shadow: "border-emerald-700" },
+            { id: 6, title: "Terang dan Gelap", icon: "fa-lightbulb", color: "from-indigo-400 to-violet-500", shadow: "border-violet-700" },
+            { id: 7, title: "Elektrik", icon: "fa-bolt", color: "from-yellow-400 to-orange-400", shadow: "border-orange-600" },
+            { id: 8, title: "Campuran", icon: "fa-blender", color: "from-fuchsia-400 to-pink-500", shadow: "border-pink-700" },
+            { id: 9, title: "Bumi", icon: "fa-earth-asia", color: "from-cyan-400 to-blue-500", shadow: "border-blue-700" },
+            { id: 10, title: "Teknologi", icon: "fa-gears", color: "from-slate-500 to-gray-600", shadow: "border-gray-800" }
+        ];
+
+        // Format: [Question Text, [Options Array], Correct Index, Graphic Code (Optional)]
+        const questions = {
+            u1: [
+                ["Apakah deria yang digunakan untuk merasa roti yang telah masak?", ["Penglihatan", "Rasa", "Pendengaran", "Bau"], 1, ""],
+                ["Aktiviti menghidu bau kek yang sedang dimasak menggunakan deria apa?", ["Bau", "Sentuhan", "Penglihatan", "Rasa"], 0, ""],
+                ["Itik, penguin dan helang mempunyai ciri sepunya. Apakah ciri tersebut?", ["Tidak berkepak", "Berkaki empat", "Berkepak", "Boleh berenang"], 2, `<i class="fa-solid fa-crow text-7xl text-slate-700 drop-shadow-md"></i>`],
+                ["Kambing, tenuk dan harimau berbeza daripada itik kerana haiwan ini...", ["Berkepak", "Tidak berkepak", "Berkaki dua", "Mempunyai paruh"], 1, ""],
+                ["Padi dan paku pakis boleh dikelaskan dalam kumpulan tumbuhan...", ["Berbunga", "Berbuah", "Tidak berbunga", "Berduri"], 2, ""],
+                ["Bunga kertas dan pokok pain berbeza kerana bunga kertas ialah tumbuhan...", ["Tidak berbunga", "Berbunga", "Beracun", "Di dalam air"], 1, ""],
+                ["Apakah alat yang sesuai untuk mengukur berat badan Kugan?", ["Pembaris", "Pita pengukur", "Alat penimbang", "Jam randik"], 2, `<i class="fa-solid fa-weight-scale text-7xl text-sky-500 drop-shadow-md"></i>`],
+                ["Untuk mengukur ukur lilit kepala, alat apakah yang paling sesuai digunakan selain pita ukur?", ["Reben dan pembaris", "Penyapu", "Bikar", "Penimbang"], 0, ""],
+                ["Kemahiran mencatat dan membacakan maklumat dipanggil kemahiran...", ["Memerhati", "Mengelas", "Mengukur", "Berkomunikasi"], 3, ""],
+                ["Bentuk komunikasi boleh dilakukan melalui cara berikut KECUALI...", ["Carta", "Graf", "Tidur", "Model"], 2, ""],
+                ["Apakah maksud Kemahiran Manipulatif?", ["Cara membaca buku", "Kemahiran melukis potret", "Kemahiran mengendalikan peralatan sains dengan betul", "Cara membersihkan kelas"], 2, ""],
+                ["Bagaimanakah cara yang betul untuk memindahkan cecair dari satu bikar ke silinder penyukat?", ["Tuang dengan pantas", "Tuang secara cermat", "Gunakan tangan", "Goncang bikar"], 1, ""],
+                ["Semasa menangkap spesimen hidup seperti siput, kita haruslah...", ["Memicitnya kuat-kuat", "Mengendalikannya dengan cermat", "Membuangnya ke lantai", "Mengeringkannya"], 1, ""],
+                ["Apakah yang perlu dilakukan selepas selesai memerhatikan spesimen hidup (siput)?", ["Simpan dalam laci", "Lepaskan ke tempat asalnya", "Buang dalam tong sampah", "Bawa balik rumah"], 1, ""],
+                ["Cara yang betul untuk membersihkan tabung uji yang kotor ialah...", ["Gunakan berus tabung uji dan air mengalir", "Lapkan dengan baju", "Jemur di bawah matahari", "Ketuk pada meja"], 0, ""]
+            ],
+            u2: [
+                ["Sisa pepejal dan sampah hendaklah dibuang ke dalam...", ["Singki", "Laci meja", "Bakul sampah", "Luar tingkap"], 2, ""],
+                ["Di manakah sisa cecair (bahan kimia cecair) patut dibuang?", ["Tong sampah", "Singki dengan air mengalir", "Lantai bilik sains", "Pasu bunga"], 1, ""],
+                ["Apakah yang akan berlaku jika kertas dibuang ke dalam singki?", ["Singki menjadi bersih", "Singki akan tersumbat", "Air akan menjadi wangi", "Kertas akan hancur sendiri"], 1, ""],
+                ["Jika kamu terpecahkan bikar kaca di dalam Bilik Sains, apakah tindakan pertama kamu?", ["Sembunyikan serpihan kaca", "Beritahu guru dengan segera", "Kutip guna tangan kosong", "Buat tidak tahu"], 1, ""],
+                ["Mengapakah beg sekolah tidak dibenarkan dibawa masuk ke dalam Bilik Sains?", ["Kerana bilik sains kecil", "Boleh mengganggu pergerakan murid", "Beg akan menjadi kotor", "Guru tidak suka"], 1, ""],
+                ["Jika rakan kamu terluka tangannya terkena kaca, kamu harus...", ["Mentertawakannya", "Membiarkannya", "Melaporkan kepada guru", "Membalutnya dengan kertas"], 2, ""],
+                ["Selepas menggunakan radas sains, kita perlu...", ["Biarkan di atas meja", "Membersihkan dan menyimpannya semula", "Buang ke dalam tong sampah", "Bawa pulang ke rumah"], 1, ""],
+                ["Bolehkah kita bergurau dan berlari di dalam Bilik Sains?", ["Boleh jika guru tiada", "Boleh untuk panaskan badan", "Tidak, kerana membahayakan keselamatan", "Tidak, kerana bising"], 2, ""],
+                ["Apakah barang yang dibenarkan dibawa masuk ke dalam Bilik Sains?", ["Makanan dan minuman", "Alat permainan", "Buku dan alat tulis sahaja", "Beg sekolah besar"], 2, ""],
+                ["Tujuan utama mematuhi Peraturan Bilik Sains adalah untuk...", ["Menyusahkan murid", "Mendapat markah tinggi", "Menjaga kebersihan dan keselamatan", "Menghias bilik sains"], 2, ""],
+                ["Apakah tindakan yang BETUL semasa berada di Bilik Sains?", ["Makan roti", "Minum air manis", "Mendengar arahan guru", "Tidur di meja"], 2, ""],
+                ["Berdasarkan simbol di atas, bahan kimia tersebut bermaksud...", ["Boleh diminum", "Toksik / Beracun", "Mudah terbakar", "Bahan pewangi"], 1, `<div class="bg-yellow-400 w-32 h-32 mx-auto rounded-xl flex items-center justify-center border-4 border-black shadow-lg transform rotate-3"><i class="fa-solid fa-skull-crossbones text-7xl text-black"></i></div>`],
+                ["Simbol ini pada botol bermaksud bahan tersebut adalah...", ["Sejuk", "Mudah terbakar", "Menghakis", "Boleh dimakan"], 1, `<div class="bg-yellow-400 w-32 h-32 mx-auto rounded-xl flex items-center justify-center border-4 border-black shadow-lg transform -rotate-3"><i class="fa-solid fa-fire-flame-curved text-7xl text-black"></i></div>`],
+                ["Peralatan sains yang telah siap dicuci mesti diletakkan di mana?", ["Rak pengering atau tempat asalnya", "Di atas kerusi", "Di lantai", "Dalam beg sekolah"], 0, ""],
+                ["Susun semula kerusi sebelum keluar dari Bilik Sains. Pernyataan ini...", ["Salah", "Betul", "Hanya untuk ketua kelas", "Tidak wajib"], 1, ""]
+            ],
+            u3: [
+                ["Bagaimanakah cara manusia membiak?", ["Bertelur", "Membelah diri", "Melahirkan anak", "Membentuk spora"], 2, ""],
+                ["Peringkat pertama dalam tumbesaran manusia selepas dilahirkan ialah...", ["Remaja", "Kanak-kanak", "Bayi", "Dewasa"], 2, ""],
+                ["Urutan tumbesaran manusia yang betul ialah...", ["Bayi -> Remaja -> Kanak-kanak -> Dewasa", "Bayi -> Kanak-kanak -> Remaja -> Dewasa", "Kanak-kanak -> Bayi -> Dewasa -> Remaja", "Dewasa -> Remaja -> Kanak-kanak -> Bayi"], 1, ""],
+                ["Semasa membesar, saiz baju Kanang menjadi ketat. Ini menunjukkan saiz badan Kanang...", ["Semakin mengecil", "Bertambah besar", "Tidak berubah", "Menjadi kurus"], 1, ""],
+                ["Selain saiz yang bertambah, manusia yang sedang membesar juga akan mengalami pertambahan...", ["Tinggi dan berat", "Warna kulit", "Bilangan mata", "Jenis rambut"], 0, ""],
+                ["Adakah kadar tumbesaran setiap murid dalam Kelas 2 Arif sama?", ["Ya, semua sama tinggi", "Tidak, tumbesaran berbeza antara individu", "Ya, semua sama berat", "Tidak, semua tidak membesar"], 1, ""],
+                ["Saiz tapak tangan Kugan lebih besar berbanding Kanang walaupun mereka sebaya. Ini bukti bahawa...", ["Kugan makan banyak", "Tumbesaran manusia adalah berbeza-beza", "Kanang tidak sihat", "Tangan Kugan bengkak"], 1, ""],
+                ["Warna iris mata Nisa berwarna coklat seperti ibunya. Ini menunjukkan Nisa...", ["Memakai kanta lekap", "Mewarisi ciri daripada ibunya", "Mata rosak", "Terkena jangkitan"], 1, ""],
+                ["Pewarisan bermaksud...", ["Ciri yang ditiru dari rakan", "Ciri yang diwarisi daripada ibu, bapa atau keturunan", "Ciri yang dibeli", "Sifat semula jadi haiwan"], 1, ""],
+                ["Antara ciri yang boleh diwarisi oleh anak daripada ibu bapa ialah...", ["Warna baju", "Kepandaian mengayuh basikal", "Jenis rambut", "Kegemaran makanan"], 2, ""],
+                ["Rambut Ali keriting. Datuknya juga berambut keriting. Ini bermaksud Ali mewarisi ciri keturunannya daripada...", ["Kawan baiknya", "Jirannya", "Datuknya", "Gurunya"], 2, ""],
+                ["Warna kulit yang cerah atau gelap pada anak dipengaruhi oleh...", ["Cahaya matahari sahaja", "Krim pemutih", "Pewarisan keturunan", "Makanan yang dimakan"], 2, ""],
+                ["Alat ini digunakan untuk mengukur tumbesaran manusia melalui...", ["Tekanan darah", "Ketinggian (Pita pengukur dinding)", "Berat badan", "Jangka suhu"], 1, `<i class="fa-solid fa-ruler-vertical text-7xl text-emerald-500 drop-shadow-md"></i>`],
+                ["Walaupun dua orang murid lahir pada tahun yang sama, berat mereka mungkin...", ["Mesti tepat sama", "Semuanya 20kg", "Berbeza", "Boleh diramal"], 2, ""],
+                ["Keperluan asas untuk bayi terus membesar menjadi dewasa ialah...", ["Mainan", "Makanan berkhasiat", "Gula-gula", "Televisyen"], 1, ""]
+            ],
+            u4: [
+                ["Bagaimanakah burung bangau membiak?", ["Melahirkan anak", "Bertelur", "Membelah diri", "Menyimpan anak dalam poket"], 1, `<div class="flex justify-center gap-3"><i class="fa-solid fa-egg text-5xl text-amber-500"></i><i class="fa-solid fa-egg text-5xl text-amber-500"></i></div>`],
+                ["Kucing membiak dengan cara...", ["Bertelur", "Bertelur sedikit", "Melahirkan anak", "Mengeram"], 2, ""],
+                ["Antara berikut, haiwan manakah yang bertelur?", ["Kanggaru", "Ikan lumba-lumba", "Buaya", "Tenggiling"], 2, ""],
+                ["Haiwan yang melahirkan anak ialah...", ["Katak", "Nyamuk", "Arnab", "Burung angsa"], 2, ""],
+                ["Katak dan ikan bertelur dengan bilangan yang sangat banyak. Mengapa?", ["Kerana mereka benci telur mereka", "Untuk menakutkan musuh", "Supaya spesies terus wujud dan telur tidak habis dimakan musuh", "Untuk menjual telur"], 2, ""],
+                ["Haiwan manakah yang bertelur sedikit?", ["Penyu", "Semut", "Katak", "Penguin"], 3, ""],
+                ["Bagaimanakah penyu melindungi telurnya daripada musuh?", ["Membuat sarang di atas dahan", "Mengeramnya", "Menimbus telurnya di dalam pasir di pantai", "Menelan telurnya"], 2, `<div class="flex justify-center items-end gap-2 p-4 bg-yellow-50 rounded-2xl"><i class="fa-solid fa-water text-5xl text-blue-400"></i><i class="fa-solid fa-egg text-3xl text-orange-200 border-b-8 border-yellow-600 rounded-b-full"></i></div>`],
+                ["Haiwan manakah yang melahirkan anak yang SEDIKIT?", ["Kucing", "Tenggiling", "Arnab", "Anjing"], 1, ""],
+                ["Anak beruang dan anak badak air kelihatan _____ seperti induknya.", ["Berbeza", "Sama / Menyerupai", "Lain warna", "Bersisik"], 1, ""],
+                ["Anak rama-rama tidak kelihatan seperti rama-rama dewasa. Ia dipanggil...", ["Beluncas / Larva", "Berudu", "Nyamuk", "Pupa"], 0, `<i class="fa-solid fa-bug text-7xl text-green-500 drop-shadow-md"></i>`],
+                ["Kitar hidup katak bermula daripada...", ["Berudu", "Katak dewasa", "Telur", "Anak katak"], 2, `<div class="flex justify-center items-center gap-4 bg-slate-50 p-4 rounded-2xl"><i class="fa-solid fa-egg text-3xl text-slate-400"></i><i class="fa-solid fa-arrow-right text-slate-400"></i><i class="fa-solid fa-frog text-6xl text-green-500"></i></div>`],
+                ["Apakah peringkat tumbesaran katak selepas telur menetas?", ["Berudu", "Katak dewasa", "Kepompong", "Telur"], 0, ""],
+                ["Anak lembu apabila membesar akan menjadi...", ["Lembu dewasa yang rupanya menyerupai induknya", "Kuda", "Kambing", "Kerbau"], 0, ""],
+                ["Mengapakah kucing menyembunyikan anaknya di tempat tersorok?", ["Untuk tidur lama", "Menyusahkan tuannya", "Melindungi anak daripada gangguan musuh", "Mencari tikus"], 2, ""],
+                ["Nyamuk membiak dengan cara...", ["Melahirkan anak", "Bertelur dalam air", "Bertelur di pasir", "Mengeram anak"], 1, ""]
+            ],
+            u5: [
+                ["Apakah kepentingan tumbuh-tumbuhan kepada haiwan seperti monyet?", ["Sumber kenderaan", "Habitat dan sumber makanan", "Sumber elektrik", "Sumber air"], 1, ""],
+                ["Tumbuh-tumbuhan membekalkan apa kepada manusia untuk bernafas?", ["Karbon dioksida", "Oksigen (Sumber udara)", "Gas beracun", "Debu"], 1, ""],
+                ["Apakah TIGA keperluan asas untuk biji benih bercambah?", ["Air, udara dan suhu yang sesuai", "Tanah, baja dan cahaya", "Air, ais dan tanah", "Baja, udara dan pasu"], 0, ""],
+                ["Semasa pokok jagung membesar, lilitan batangnya akan...", ["Bertambah besar", "Semakin kecil", "Hilang", "Menjadi warna biru"], 0, ""],
+                ["Apabila pokok membesar, bilangan daunnya akan...", ["Berkurang", "Kering", "Bertambah banyak", "Menjadi putih"], 2, ""],
+                ["Peringkat pertama kitar hidup sebatang pokok bermula dengan...", ["Pokok berbunga", "Anak pokok", "Biji benih", "Pokok berbuah"], 2, ""],
+                ["Susun urutan tumbesaran pokok tomato yang betul.", ["Biji benih -> Bercambah -> Anak pokok -> Berbunga -> Berbuah", "Berbuah -> Berbunga -> Biji benih", "Anak pokok -> Biji benih -> Berbuah", "Bercambah -> Berbuah -> Berbunga"], 0, ""],
+                ["Jika pokok A disiram air dan pokok B tidak disiram air selama 2 minggu, apakah yang berlaku pada pokok B?", ["Berbunga lebat", "Layu dan mati", "Membesar cepat", "Berubah warna-warni"], 1, ""],
+                ["Pokok D ditutup dengan kotak yang gelap. Selepas seminggu, daunnya menjadi kuning kerana kekurangan...", ["Air", "Baja", "Cahaya matahari", "Udara"], 2, ""],
+                ["Pokok C ditutup dan diikat dengan plastik kedap udara. Pokok C mati kerana ketiadaan...", ["Air", "Udara", "Baja", "Ruang"], 1, ""],
+                ["Selain air, udara dan cahaya matahari, apakah yang menyebabkan pokok hidup lebih subur?", ["Pasir", "Nutrien (Baja)", "Plastik", "Batu"], 1, ""],
+                ["Biji benih yang diletakkan di dalam peti sejuk tidak akan bercambah kerana...", ["Terlalu gelap", "Tiada air", "Suhu tidak sesuai (terlalu sejuk)", "Biji benih beku mati"], 2, ""],
+                ["Apakah ciri pada pokok tomato yang menunjukkan ia hampir menghasilkan buah?", ["Daun luruh", "Pokok berbunga", "Akar keluar", "Batang patah"], 1, ""],
+                ["Tumbuh-tumbuhan herba amat penting kepada manusia sebagai...", ["Bahan api", "Sumber ubat-ubatan", "Tempat berlindung", "Mainan"], 1, ""],
+                ["Mengapakah kita perlu mengukur tinggi anak pokok menggunakan pembaris?", ["Untuk mematahkannya", "Melihat warnanya", "Untuk merekod kadar tumbesarannya", "Mencari baja"], 2, ""]
+            ],
+            u6: [
+                ["Sumber utama cahaya pada waktu siang ialah...", ["Lampu jalan", "Matahari", "Bulan", "Api"], 1, `<i class="fa-solid fa-sun text-7xl text-yellow-400 animate-[spin_10s_linear_infinite] drop-shadow-lg"></i>`],
+                ["Pada waktu malam, kita menggunakan ________ untuk menerangi kawasan.", ["Awan", "Lampu dan api", "Kaca mata", "Cermin"], 1, ""],
+                ["Aktiviti lebih mudah dilakukan dalam keadaan...", ["Gelap", "Terang", "Berkabus", "Hujan lebat"], 1, ""],
+                ["Bagaimanakah bayang-bayang terhasil?", ["Apabila cahaya dihalang oleh objek", "Apabila angin bertiup kuat", "Apabila cahaya pantul ke cermin", "Apabila bateri lampu habis"], 0, ""],
+                ["Sekiranya cahaya disuluh pada sebiji bola, apakah bentuk bayang-bayang yang terhasil di dinding?", ["Segi empat", "Bulat", "Segi tiga", "Bintang"], 1, ""],
+                ["Adakah plastik pembalut buku jernih menghasilkan bayang-bayang yang jelas?", ["Ya, sangat jelas", "Tidak, bayang-bayangnya kurang jelas atau tiada kerana ia lutsinar", "Ya, bayangnya warna-warni", "Bayangnya sangat besar"], 1, ""],
+                ["Objek yang manakah menghasilkan bayang-bayang yang PALING JELAS?", ["Kertas tebal", "Kertas surih", "Plastik jernih", "Cermin tingkap telus sinar"], 0, ""],
+                ["Jika kedudukan objek didekatkan dengan lampu suluh, bayang-bayangnya menjadi semakin...", ["Kecil", "Sama saiz", "Besar", "Hilang"], 2, ""],
+                ["Permainan tradisional yang menggunakan konsep halangan cahaya untuk membentuk watak dinamakan...", ["Batu Seremban", "Wau", "Wayang Kulit", "Gasing"], 2, `<i class="fa-solid fa-masks-theater text-7xl text-amber-800 drop-shadow-md"></i>`],
+                ["Dalam permainan wayang kulit, kenapa bayang-bayang kelihatan jelas?", ["Kerana objek watak tebal dan cahaya tidak boleh menembusinya", "Kerana skrin rosak", "Kerana ada warna", "Kerana angin tiup"], 0, ""],
+                ["Amin dan Khairul menghala 2 lampu dari arah berbeza ke sebatang pokok. Berapa bayang-bayang akan terbentuk?", ["Satu", "Dua", "Tiga", "Tiada"], 1, ""],
+                ["Jika bekalan elektrik terputus pada waktu malam, apakah sumber cahaya alternatif?", ["Kipas", "Televisyen", "Lilin", "Peti sejuk"], 2, ""],
+                ["Bentuk bayang-bayang seni tangan akan menyerupai...", ["Lampu suluh", "Bentuk objek (tangan) yang menghalang cahaya", "Bentuk dinding", "Bentuk matahari"], 1, ""],
+                ["Lampu jalan dihidupkan pada waktu malam bertujuan untuk...", ["Menghalau nyamuk", "Menghasilkan haba", "Memberi cahaya agar pemanduan selamat", "Mencantikkan kereta"], 2, ""],
+                ["Cahaya tidak boleh melepasi dinding konkrit. Maka dinding konkrit menghasilkan bayang-bayang yang...", ["Jelas", "Kurang Jelas", "Tiada bayang-bayang", "Warna-warni"], 0, ""]
+            ],
+            u7: [
+                ["Apakah fungsi sel kering dalam litar elektrik?", ["Memutuskan litar", "Membekalkan tenaga elektrik", "Menghasilkan bunyi", "Menyalakan api"], 1, `<i class="fa-solid fa-battery-half text-7xl text-slate-600 drop-shadow-md"></i>`],
+                ["Komponen yang berfungsi untuk menyambungkan dan memutuskan litar elektrik ialah...", ["Mentol", "Wayar", "Suis", "Sel kering"], 2, ""],
+                ["Mentol dalam litar elektrik berfungsi untuk...", ["Menyimpan elektrik", "Menghasilkan cahaya", "Mengalirkan arus", "Menjadi suis"], 1, ""],
+                ["Mengapakah mentol mudah pecah?", ["Kerana ia panas", "Kerana diperbuat daripada plastik", "Kerana diperbuat daripada kaca", "Kerana ia kecil"], 2, ""],
+                ["Wayar penyambung digunakan untuk...", ["Membalut bateri", "Menyambungkan setiap komponen elektrik menjadi litar lengkap", "Menjadi hiasan litar", "Melindungi suis"], 1, ""],
+                ["Berdasarkan litar di atas, mentol akan menyala jika suis dalam keadaan...", ["Terbuka (Suis OFF)", "Tertutup (Suis ON / Litar Lengkap)", "Terputus", "Berkarat"], 1, `<div class="flex items-center justify-center space-x-2 bg-slate-100 p-6 rounded-2xl border-2 border-slate-300 inline-flex shadow-inner"><i class="fa-solid fa-battery-full text-5xl text-slate-700"></i><div class="h-1.5 w-8 bg-slate-800 rounded-full"></div><i class="fa-solid fa-toggle-on text-5xl text-green-500 drop-shadow-sm"></i><div class="h-1.5 w-8 bg-slate-800 rounded-full"></div><i class="fa-solid fa-lightbulb text-5xl text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]"></i></div>`],
+                ["Jika mentol tidak menyala walaupun litar lengkap, mungkin disebabkan oleh...", ["Suis ditekan", "Mentol baru", "Sel kering kekurangan tenaga (lemah/mati)", "Kawat bersambung"], 2, ""],
+                ["Pemasangan mentol pada pemegang yang tidak ketat akan menyebabkan...", ["Mentol menjadi terang", "Mentol pecah", "Mentol tidak menyala", "Bateri panas"], 2, ""],
+                ["Apakah yang dimaksudkan dengan Konduktor Elektrik?", ["Bahan yang tidak membenarkan arus mengalir", "Bahan yang membenarkan arus elektrik mengalir melaluinya", "Alat penimbang", "Jenis magnet"], 1, ""],
+                ["Penebat elektrik ialah bahan yang...", ["Membenarkan arus mengalir", "Menggantikan bateri", "Tidak membenarkan arus elektrik mengalir melaluinya", "Menghasilkan cahaya"], 2, ""],
+                ["Antara berikut, bahan yang manakah ialah KONDUKTOR elektrik?", ["Sudu logam dan duit syiling", "Getah pemadam", "Plastik", "Kayu aiskrim"], 0, `<div class="flex justify-center gap-6"><i class="fa-solid fa-coins text-7xl text-amber-400 drop-shadow-sm"></i><i class="fa-solid fa-spoon text-7xl text-slate-400 drop-shadow-sm"></i></div>`],
+                ["Objek yang manakah bertindak sebagai PENEBAT elektrik?", ["Klip kertas besi", "Paku", "Sapu tangan kain", "Duit syiling 50 sen"], 2, ""],
+                ["Jika suis digantikan dengan straw plastik dalam litar lengkap, adakah mentol menyala?", ["Ya, sangat terang", "Tidak, kerana straw adalah penebat", "Ya, straw ialah konduktor", "Mentol akan meletup"], 1, ""],
+                ["Dawai tembaga di dalam kabel elektrik berfungsi sebagai...", ["Penebat", "Konduktor yang baik untuk mengalirkan elektrik", "Suis utama", "Bateri tambahan"], 1, ""],
+                ["Bahagian luar wayar elektrik dibalut dengan plastik/getah kerana bahan tersebut adalah...", ["Penebat yang mengelakkan renjatan elektrik", "Murah", "Konduktor yang baik", "Berkilat"], 0, ""]
+            ],
+            u8: [
+                ["Bagaimanakah cara mengasingkan kacang daripada muruku?", ["Turas", "Menyisih guna tangan", "Ayak", "Guna magnet"], 1, ""],
+                ["Kaedah MENGAYAK sesuai digunakan untuk mengasingkan bahan...", ["Bersaiz halus daripada bahan bersaiz besar (cth: tepung dan kismis)", "Besi dan pasir", "Daun dan air", "Kacang hijau dan merah"], 0, `<i class="fa-solid fa-kitchen-set text-7xl text-amber-600 drop-shadow-md"></i>`],
+                ["Klip kertas yang bercampur dengan pasir paling mudah diasingkan menggunakan...", ["Tangan", "Penapis", "Magnet", "Air"], 2, ""],
+                ["Campuran serpihan kayu reput dan pasir sungai di dalam air boleh diasingkan secara...", ["Menyisih", "Mengapung (kayu timbul, pasir tenggelam)", "Mengayak", "Magnet"], 1, ""],
+                ["Kertas turas dan corong turas digunakan untuk kaedah...", ["Menyisih", "Mengapung", "Menuras (memisahkan pepejal dari cecair)", "Mendidih"], 2, ""],
+                ["Gula dimasukkan ke dalam air dan hilang selepas diaduk. Ini bermakna gula...", ["Meruap ke udara", "Larut di dalam air", "Musnah", "Berubah menjadi gas"], 1, ""],
+                ["Antara bahan berikut, yang manakah TIDAK BOLEH LARUT di dalam air?", ["Garam", "Gula halus", "Biji jagung", "Pewarna makanan"], 2, ""],
+                ["Untuk melarutkan gula dengan LEBIH CEPAT, kita patut menggunakan air...", ["Panas", "Sejuk", "Biasa", "Kopi"], 0, ""],
+                ["Apakah tindakan yang menjadikan garam dilarutkan lebih cepat selain guna air panas?", ["Membiarkannya sahaja", "Mengaduk (mengacau) campuran tersebut", "Menjemur di panas matahari", "Tutup dengan kain"], 1, ""],
+                ["Antara gula pasir (saiz kecil) dan gula kiub (saiz besar), yang manakah lebih cepat larut dalam air?", ["Gula kiub", "Gula pasir (bahan bersaiz kecil lebih cepat larut)", "Kedua-duanya sama cepat", "Tidak larut sama sekali"], 1, ""],
+                ["Bahan larut lebih cepat jika _________, dilarutkan dalam air panas dan bersaiz kecil.", ["Diaduk / dikacau", "Disimpan di dalam peti sejuk", "Ditutup penutup", "Dituras"], 0, ""],
+                ["Campuran serbuk besi dan pasir seperti rajah di atas paling tepat diasingkan menggunakan kaedah...", ["Menapis teh", "Tarikan Magnet", "Air menggelegak", "Meniup angin"], 1, `<div class="flex items-center justify-center gap-4 bg-slate-50 p-6 rounded-2xl border border-slate-200"><i class="fa-solid fa-magnet text-7xl text-red-500 transform -rotate-45 drop-shadow-lg"></i><i class="fa-solid fa-ellipsis text-5xl text-slate-700"></i></div>`],
+                ["Hampas teh diasingkan daripada air teh menggunakan kaedah...", ["Menapis / Menuras", "Magnet", "Menyisih dengan penyepit", "Mengapung"], 0, ""],
+                ["Adakah beras larut di dalam air?", ["Ya, dalam masa seminit", "Tidak larut", "Ya, jika digoncang", "Menjadi gula"], 1, ""],
+                ["Serpihan kayu timbul manakala batu tenggelam. Fenomena ini membolehkan campuran diasingkan melalui kaedah...", ["Magnet", "Mengapung", "Mengayak", "Kertas turas"], 1, ""]
+            ],
+            u9: [
+                ["Apakah sumber air semula jadi yang terbentuk apabila titisan air daripada awan turun ke bumi?", ["Sungai", "Hujan", "Mata air", "Laut"], 1, `<i class="fa-solid fa-cloud-showers-heavy text-7xl text-blue-400 drop-shadow-md"></i>`],
+                ["Air bawah tanah yang keluar ke permukaan bumi dikenali sebagai...", ["Tasik", "Laut", "Mata air", "Awan"], 2, ""],
+                ["Kawasan air yang sangat luas, masin dan dikelilingi daratan di sesetengah tempat ialah...", ["Laut", "Tasik", "Sungai", "Perigi"], 0, ""],
+                ["Arah aliran air semula jadi sentiasa mengalir dari kawasan yang tinggi ke kawasan yang...", ["Rendah", "Berbukit", "Kering", "Angkasa"], 0, ""],
+                ["Air sungai dan air terjun akhirnya akan mengalir ke...", ["Gunung", "Laut", "Awan", "Tangki air rumah"], 1, ""],
+                ["Dalam kitaran air semula jadi, air di bumi disejat oleh haba matahari menjadi...", ["Ais", "Awan", "Wap air", "Hujan"], 2, ""],
+                ["Wap air yang naik ke atas akan menyejuk dan membentuk...", ["Bintang", "Awan", "Pelangi", "Asap"], 1, `<i class="fa-solid fa-cloud text-7xl text-slate-300 drop-shadow-xl"></i>`],
+                ["Awan yang berat akan menurunkan air kembali ke bumi sebagai...", ["Ribut", "Hujan", "Salji", "Batu"], 1, ""],
+                ["Udara terdiri daripada beberapa jenis gas. Gas apakah yang diperlukan haiwan dan manusia untuk bernafas?", ["Karbon dioksida", "Nitrogen", "Oksigen", "Helium"], 2, ""],
+                ["Tumbuhan dan haiwan membebaskan gas _________ semasa menghembus nafas.", ["Oksigen", "Karbon dioksida", "Gas asli", "Hidrogen"], 1, ""],
+                ["Udara yang bergerak dikenali sebagai...", ["Awan", "Wap", "Angin", "Ombak"], 2, ""],
+                ["Angin tidak dapat dilihat tetapi boleh...", ["Diwarnakan", "Dirasai", "Dibekukan", "Dimakan"], 1, ""],
+                ["Apakah kesan baik pergerakan angin kepada kehidupan manusia?", ["Menumbangkan pokok", "Menghancurkan rumah", "Membantu mengeringkan pakaian dan menerbangkan layang-layang", "Meniup buku"], 2, ""],
+                ["Kapal layar dapat bergerak di lautan dengan bantuan...", ["Bateri", "Arus elektrik", "Angin", "Bulan"], 2, ""],
+                ["Angin yang bertiup terlalu kencang (seperti ribut) boleh memberikan kesan buruk seperti...", ["Cuaca nyaman", "Ombak besar dan kerosakan harta benda", "Menyiram pokok", "Banyak ikan"], 1, ""]
+            ],
+            u10: [
+                ["Apakah yang dimaksudkan dengan set binaan?", ["Buku mewarna", "Set komponen yang boleh dipasang menjadi model", "Alatan memasak", "Set melukis"], 1, `<i class="fa-solid fa-cubes text-7xl text-blue-500 drop-shadow-md"></i>`],
+                ["Panduan bergambar yang mengajar cara memasang set binaan dikenali sebagai...", ["Buku nota", "Manual bergambar", "Surat khabar", "Majalah"], 1, ""],
+                ["Mengapakah manual bergambar penting?", ["Untuk dibuang", "Memudahkan dan melajukan proses pemasangan model yang betul", "Untuk diwarna", "Hiasan dinding"], 1, ""],
+                ["Komponen set binaan biasanya terdiri daripada pelbagai...", ["Air dan ais", "Gula dan garam", "Bentuk (kiub, prisma, silinder) dan warna", "Besi dan magnet"], 2, ""],
+                ["Bentuk komponen yang menyerupai dadu ialah...", ["Prisma", "Silinder", "Kiub", "Piramid"], 2, ""],
+                ["Komponen berbentuk bulat dan memanjang seperti tiang dikenali sebagai...", ["Sfera", "Silinder", "Kiub", "Segi tiga"], 1, ""],
+                ["Jika kita tidak merujuk manual, apakah yang mungkin terjadi pada model kita?", ["Cepat siap", "Model lebih cantik", "Model tidak menjadi atau tersalah pasang", "Komponen bertambah"], 2, ""],
+                ["Selepas selesai bermain, bagaimanakah cara yang betul untuk membuka cantuman model?", ["Tarik sekuat hati", "Buka mengikut urutan, bermula dari langkah akhir pemasangan", "Bakar cantuman", "Ketuk dengan tukul"], 1, ""],
+                ["Mengapakah kita perlu mengemaskan dan menyusun semula komponen ke dalam kotak?", ["Supaya nampak sikit", "Supaya kawan tak nampak", "Memudahkan penggunaan akan datang dan elak komponen hilang", "Kerana diarah oleh ibu"], 2, ""],
+                ["Bolehkah kita mencipta bentuk baru tanpa mengikut manual?", ["Boleh, kita boleh guna daya kreativiti menghasilkan binaan baru", "Tidak boleh sama sekali", "Boleh, tetapi ia akan rosak", "Boleh jika guru suruh sahaja"], 0, ""],
+                ["Susun mengikut _______ dan warna sebelum menyimpan komponen ke dalam kotaknya.", ["Berat", "Bentuk", "Bau", "Harga"], 1, ""],
+                ["Tindakan mengira bilangan komponen sebelum menyimpan ke dalam kotak bertujuan untuk...", ["Bermain matematik", "Memastikan tiada komponen yang hilang", "Buang masa", "Menimbang berat"], 1, ""],
+                ["Binaan kit model (bukan set binaan am) biasanya hanya boleh menghasilkan...", ["Banyak model berbeza", "Satu jenis model tertentu sahaja", "Makanan", "Buku"], 1, ""],
+                ["Apakah bentuk blok yang menyerupai atap rumah (segi tiga panjang)?", ["Kiub", "Silinder", "Prisma", "Bebola"], 2, ""],
+                ["Semasa berkemas, kita harus meletakkan setiap komponen pada ________ yang betul di dalam kotak.", ["Ruangan / Bekas", "Lantai", "Buku", "Tong sampah"], 0, ""]
+            ]
+        };
+
+        const exams = { set1: [], set2: [] };
+        
+        function generateExams() {
+            // QA Fix: Ensure exams are statically generated nicely per session
+            for(let i=1; i<=10; i++) {
+                let unitKey = 'u' + i;
+                let unitQs = questions[unitKey];
+                
+                let shuffled = [...unitQs].sort(() => 0.5 - Math.random());
+                
+                exams.set1.push(...shuffled.slice(0, 5));
+                exams.set2.push(...shuffled.slice(5, 10));
+            }
+            
+            exams.set1.sort(() => 0.5 - Math.random());
+            exams.set2.sort(() => 0.5 - Math.random());
+        }
+        
+        generateExams();
+
+        let currentQuizData = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userAnswers = []; 
+
+        function initApp() {
+            const container = document.getElementById('unit-container');
+            unitData.forEach(unit => {
+                const btn = document.createElement('button');
+                btn.className = `btn-sci bg-gradient-to-br ${unit.color} text-white p-5 rounded-2xl shadow-lg border-b-4 ${unit.shadow} flex flex-col items-center justify-center gap-3 hover:scale-105 transition-transform duration-200`;
+                btn.onclick = () => startUnit(unit.id, unit.title);
+                btn.innerHTML = `
+                    <div class="bg-white/20 p-4 rounded-full mb-1">
+                        <i class="fa-solid ${unit.icon} text-3xl"></i>
+                    </div>
+                    <span class="font-bold text-lg text-center tracking-wide leading-tight uppercase">Unit ${unit.id}<br><span class="text-sm opacity-90 capitalize font-semibold">${unit.title.substring(0,25)}</span></span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => {
+                s.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function startUnit(unitId, title) {
+            currentQuizData = [...questions['u'+unitId]];
+            document.getElementById('quiz-title').innerText = `UNIT ${unitId}: ${title.toUpperCase()}`;
+            startQuiz();
+        }
+
+        function startExam(setId) {
+            currentQuizData = [...exams['set'+setId]];
+            document.getElementById('quiz-title').innerText = `SET PEPERIKSAAN ${setId}`;
+            startQuiz();
+        }
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers = new Array(currentQuizData.length).fill(null);
+            document.getElementById('total-q-num').innerText = currentQuizData.length;
+            showScreen('quiz-screen');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = currentQuizData[currentQuestionIndex];
+            document.getElementById('current-q-num').innerText = currentQuestionIndex + 1;
+            
+            // QA Fix: Progress Bar UX Enhancement (Starts at logical completion)
+            const progress = ((currentQuestionIndex + 1) / currentQuizData.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+
+            document.getElementById('q-text').innerText = q[0];
+            
+            const imgContainer = document.getElementById('q-image-container');
+            if(q[3] && q[3] !== "") {
+                imgContainer.innerHTML = `<div class="py-4 flex justify-center">${q[3]}</div>`;
+                imgContainer.classList.remove('hidden');
+            } else {
+                imgContainer.classList.add('hidden');
+                imgContainer.innerHTML = "";
+            }
+
+            const optContainer = document.getElementById('options-container');
+            optContainer.innerHTML = '';
+            
+            q[1].forEach((opt, index) => {
+                const btn = document.createElement('button');
+                // QA Fix: Option button class structure standardized to avoid CSS shadow glitch
+                btn.className = "option-btn text-slate-700 font-bold text-lg md:text-xl py-5 rounded-2xl text-left w-full relative";
+                
+                const label = String.fromCharCode(65 + index);
+                
+                // QA Fix: Proper padding to prevent overlap with checkmark/x icons
+                btn.innerHTML = `<span class="absolute left-4 top-1/2 -translate-y-1/2 bg-sky-100 text-sky-700 w-8 h-8 rounded-full flex items-center justify-center text-sm font-black border-2 border-sky-200">${label}</span> <span class="block pl-16 pr-14 leading-tight">${opt}</span>`;
+                
+                btn.onclick = () => selectAnswer(index);
+                optContainer.appendChild(btn);
+            });
+
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('finish-btn').classList.add('hidden');
+        }
+
+        function selectAnswer(index) {
+            if(userAnswers[currentQuestionIndex] !== null) return;
+            
+            userAnswers[currentQuestionIndex] = index;
+            const correctIndex = currentQuizData[currentQuestionIndex][2];
+            const optBtns = document.querySelectorAll('.option-btn');
+            
+            // QA Fix: Instantly disable all buttons to stop hover/active visual glitches
+            optBtns.forEach(btn => btn.disabled = true);
+            
+            // Evaluasi Kesalahan dan Menambah Visual (QA Fix: insertAdjacentHTML used to preserve DOM)
+            if(index === correctIndex) {
+                optBtns[index].classList.add('correct');
+                score++;
+                optBtns[index].insertAdjacentHTML('beforeend', `<i class="fa-solid fa-circle-check absolute right-5 top-1/2 -translate-y-1/2 text-3xl opacity-90 drop-shadow-sm"></i>`);
+            } else {
+                optBtns[index].classList.add('wrong');
+                optBtns[index].insertAdjacentHTML('beforeend', `<i class="fa-solid fa-circle-xmark absolute right-5 top-1/2 -translate-y-1/2 text-3xl text-red-600 opacity-90 drop-shadow-sm"></i>`);
+                
+                // QA Fix: Custom class .show-correct with pulse animation guides student visually
+                optBtns[correctIndex].classList.add('show-correct'); 
+                optBtns[correctIndex].insertAdjacentHTML('beforeend', `<i class="fa-solid fa-circle-check absolute right-5 top-1/2 -translate-y-1/2 text-3xl text-green-700 opacity-90 drop-shadow-sm"></i>`);
+            }
+
+            if (currentQuestionIndex < currentQuizData.length - 1) {
+                document.getElementById('next-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('finish-btn').classList.remove('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            renderQuestion();
+        }
+
+        function finishQuiz() {
+            document.getElementById('score-text').innerText = `${score}/${currentQuizData.length}`;
+            const percentage = Math.round((score / currentQuizData.length) * 100);
+            document.getElementById('percent-text').innerText = `${percentage}%`;
+            
+            let msg = "";
+            if (percentage >= 80) msg = "Hebat! Anda ialah Saintis Cilik yang cemerlang!";
+            else if (percentage >= 50) msg = "Bagus! Teruskan usaha mengkaji sains.";
+            else msg = "Jangan putus asa. Jom ulang kaji buku teks semula!";
+            
+            document.getElementById('result-message').innerText = msg;
+            showScreen('result-screen');
+        }
+
+        function showReview() {
+            const container = document.getElementById('review-container');
+            container.innerHTML = '';
+            
+            currentQuizData.forEach((q, idx) => {
+                const userAnswerIdx = userAnswers[idx];
+                const correctIdx = q[2];
+                const isCorrect = userAnswerIdx === correctIdx;
+                
+                let html = `
+                    <div class="bg-white p-5 rounded-2xl border-l-8 ${isCorrect ? 'border-green-500' : 'border-red-500'} shadow-sm mb-4">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="w-full">
+                                <span class="font-bold text-slate-400 text-sm mb-1 block">SOALAN ${idx+1}</span>
+                                <h3 class="text-lg font-bold text-slate-700 mb-3">${q[0]}</h3>
+                `;
+
+                if(q[3] !== "") {
+                    html += `<div class="mb-4 flex scale-75 origin-left">${q[3]}</div>`;
+                }
+                
+                html += `<div class="space-y-2">`;
+                
+                q[1].forEach((opt, optIdx) => {
+                    let optStyle = "text-slate-500 flex items-center";
+                    let icon = "";
+                    
+                    if (optIdx === correctIdx) {
+                        optStyle = "font-bold text-green-700 bg-green-50 p-3 rounded-xl border border-green-200 flex items-center shadow-sm";
+                        icon = `<i class="fa-solid fa-check text-green-600 mr-3 text-lg"></i>`;
+                    } else if (optIdx === userAnswerIdx && !isCorrect) {
+                        optStyle = "font-bold text-red-700 bg-red-50 p-3 rounded-xl border border-red-200 line-through flex items-center";
+                        icon = `<i class="fa-solid fa-xmark text-red-500 mr-3 text-lg"></i>`;
+                    } else {
+                        optStyle = "p-3 flex items-center";
+                        icon = `<i class="fa-solid fa-minus text-slate-300 mr-3 text-sm"></i>`;
+                    }
+                    
+                    html += `<div class="${optStyle}">${icon} <span class="flex-1">${opt}</span></div>`;
+                });
+                
+                html += `
+                            </div>
+                        </div>
+                        ${isCorrect ? `<div class="mt-4 inline-block bg-green-100 text-green-700 font-bold px-4 py-1.5 rounded-full text-sm shadow-sm"><i class="fa-solid fa-face-smile mr-1"></i> Jawapan Tepat</div>` : `<div class="mt-4 inline-block bg-red-100 text-red-700 font-bold px-4 py-1.5 rounded-full text-sm shadow-sm"><i class="fa-solid fa-face-frown mr-1"></i> Jawapan Salah</div>`}
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+            
+            showScreen('review-screen');
+        }
+
+        window.onload = () => {
+            initApp();
+        };
+    </script>
+</body>
+</html>
